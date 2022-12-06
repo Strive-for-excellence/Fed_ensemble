@@ -34,7 +34,7 @@ if __name__ == '__main__':
             # for i in range(num):
             plt.plot(f['test_acc'][:], label=name[i])
 
-            print(f"idx = {i} size = {len(f['test_acc'])}",end=' ')
+            print(f"idx = {i+1} size = {len(f['test_acc'])}",end=' ')
                 # print(f"client = {i} best_acc")
             epochs = len(f['test_acc'])
             print('last_acc = {:.3f} '.format(f['test_acc'][epochs-1]),end = ' ')
@@ -47,5 +47,5 @@ if __name__ == '__main__':
     # plt.title('mnist dataset dirichlet alpha=100')
     plt.title('alpha = 100')
     # plt.title('cifar10 CNN alpha = 0.1')
-    plt.show()
+    # plt.show()
     plt.savefig('test.png')
