@@ -18,9 +18,10 @@ if __name__ == '__main__':
         f'Z:\zhangxingyan\Fed_ensemble\save/Result_dataset(cifar10)_R(1000)_N(4)_E(1)_trainnum(1000)_P(2)_lr(0.01)_name(cifar10_alpha_d_0.1_P_2).json',
         f'Z:\zhangxingyan\Fed_ensemble\save/Result_dataset(cifar10)_R(1000)_N(4)_E(1)_trainnum(1000)_P(3)_lr(0.01)_name(cifar10_alpha_d_0.1_P_3).json',
         f'Z:\zhangxingyan\Fed_ensemble\save/Result_dataset(cifar10)_R(1000)_N(4)_E(1)_trainnum(1000)_P(4)_lr(0.01)_name(cifar10_alpha_d_0.1_P_4).json',
+        f'Z:\zhangxingyan\Fed_ensemble\save/Result_dataset(cifar10)_R(1000)_N(4)_E(1)_trainnum(1000)_P(5)_lr(0.01)_name(cifar10_alpha_d_0.1_P_5).json',
 
     ]
-    name = ["fedavg","Ensebmle model + fedavg","Ensemble model + personalize conv","Ensemble model + personalize conv and classifier"]
+    name = ["fedavg","Ensebmle model + fedavg","Ensemble model + personalize conv","Ensemble model + personalize conv and classifier","Ensemble model + personalize classifier"]
     # name = ['dnn','cnn']
 #     name = ['1 individual','2 avg','3 weight_avg','4 weight_avg_kalman','5 weight_avg_MCdropout','6 weight_avg_kalman_MCdropout','7 weight_avg_kalman_MCdropout_10','8','9']
     for  i in range(10,100):
@@ -44,7 +45,7 @@ if __name__ == '__main__':
         plt.ylabel('acc')
         plt.legend()
     # plt.title('mnist dataset dirichlet alpha=100')
-    plt.title('alpha = 0.1')
+    plt.title('alpha = 100')
     # plt.title('cifar10 CNN alpha = 0.1')
-    # plt.show()
+    plt.show()
     plt.savefig('test.png')
