@@ -32,3 +32,5 @@
         --policy 5   \
         --iid 0 --noniid dirichlet --alpha 0.1  \
         --name cifar10_alpha_d_0.1_P_5# Fed_ensemble
+## 目前的实验结果
+![img_1.png](img_1.png)
