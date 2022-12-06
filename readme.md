@@ -7,7 +7,7 @@
 ### 3.  Ensemble 模型， 个性化最后一层卷积层，分类器依旧聚合
 ### 4.  Ensemble 模型， 个性化最后一层卷积层，分类器不聚合
 ### 5.  Ensemble 模型， 分类器不聚合，其它聚合
-####     1 Lenet 模型
+####     执行命令
         python3 main.py  --dataset cifar10 --num_classes 10 --epochs 1000 --num_users 4 --local_ep 1 --local_bs 100 --train_num 1000 --lr 0.01 \
         --policy 1   \
         --iid 0 --noniid dirichlet --alpha 0.1  \
