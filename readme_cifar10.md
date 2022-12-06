@@ -26,3 +26,5 @@
         --policy 4   \
         --iid 0 --noniid dirichlet --alpha 100  \
         --name cifar10_alpha_d_100_P_4
+目前的实验结果
+![img_1.png](img_1.png)
