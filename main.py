@@ -50,8 +50,8 @@ def get_model(args):
                 # print(name)
                 if 'conv2' not in name:
                     continue
-                not_required_grad = 'conv2.' + str(i)
-                if not_required_grad in name:
+                required_grad = 'conv2.' + str(i)
+                if required_grad in name:
                     param.requires_grad = True
                 else:
                     param.requires_grad = False
