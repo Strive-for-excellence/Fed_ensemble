@@ -45,7 +45,7 @@ class Server:
                     w_avg[key] += w[client][key]
                     cnt += 1
             w_avg[key] = torch.div(w_avg[key],  cnt)
-            if self.args.policy == 3 and 'conv2' in key:
+            if (self.args.policy == 3 or self.args.policy == 4) and 'conv2' in key:
                 pos1 = key.find('.')
                 pos2 = key.find('.',pos1+1)
                 idx = int(key[pos1+1:pos2])

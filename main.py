@@ -44,7 +44,7 @@ def get_model(args):
 
     for i in range( args.num_users):
         local_model = copy.deepcopy(global_model)
-        if args.policy == 3:
+        if args.policy == 3 or args.policy == 4:
 
             for name,param in local_model.named_parameters():
                 # print(name)
