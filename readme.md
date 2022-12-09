@@ -25,8 +25,8 @@
 
         python3 main.py  --dataset cifar10 --num_classes 10 --epochs 1000 --num_users 4 --local_ep 1 --local_bs 100 --train_num 1000 --lr 0.01 \
         --policy 4   \
-        --iid 0 --noniid dirichlet --alpha 1  \
-        --name cifar10_alpha_d_1_P_4
+        --iid 0 --noniid dirichlet --alpha 0.1  \
+        --name cifar10_alpha_d_0.1_P_4
 
         python3 main.py  --dataset cifar10 --num_classes 10 --epochs 1000 --num_users 4 --local_ep 1 --local_bs 100 --train_num 1000 --lr 0.01 \
         --policy 5   \
@@ -34,4 +34,5 @@
         --name cifar10_alpha_d_1_P_5
 
 ### 目前的实验结果
-![img_1.png](img_1.png)
+
+![img_2.png](img_2.png)
