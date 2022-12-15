@@ -238,15 +238,9 @@ class LeNet_cifar10_for_ensemble2(nn.Module):
     def forward(self, x):
         x = func.relu(self.conv1(x))
         x = func.max_pool2d(x, 2)
-
-        x_ensemble = []
-        for i in range(4):
-            x_i = func.relu(self.conv2[i](x))
-            x_i = func.max_pool2d(x_i,2)
-            x_i = x_i.view(x_i.size(0),-1)
-            x_ensemble.append(x_i)
-        x = torch.cat((x_ensemble),dim=1)
-        x = x.view(x.size(0), -1)
+        out = [conv(x) for conv in self.conv2]
+        out = torch.cat(out, dim=1)
+        x = out.view(out.size(0), -1)
         x = func.relu(self.fc1(x))
         x = func.relu(self.fc2(x))
         # x = self.drop_layer(x)

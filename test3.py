@@ -36,6 +36,9 @@ for name, param in model.named_parameters():
     print(name)
 # print(model.named_parameters())
 model.to(device)
+js = torch.jit.script(model)
+js.save("model.pt")
+'''
 # model = LeNet_mnist()
 optimizer  = torch.optim.SGD(model.parameters(),lr=0.01)
 criterion = torch.nn.CrossEntropyLoss().to(device)
@@ -91,3 +94,4 @@ def train():
 
 # train()
 
+'''
