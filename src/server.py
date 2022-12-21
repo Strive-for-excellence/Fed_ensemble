@@ -37,7 +37,6 @@ class Server:
         :return: the average of the weights
         '''
         w_avg = copy.deepcopy(w[0])
-
         for key in w_avg.keys():
             cnt = 1
             for client in range(1,self.args.num_users):
@@ -45,12 +44,6 @@ class Server:
                     w_avg[key] += w[client][key]
                     cnt += 1
             w_avg[key] = torch.div(w_avg[key],  cnt)
-            if (self.args.policy == 3 or self.args.policy == 4) and 'conv2' in key:
-                pos1 = key.find('.')
-                pos2 = key.find('.',pos1+1)
-                idx = int(key[pos1+1:pos2])
-                print('conv = {}, idx = {}'.format(key,idx))
-                w_avg[key] = copy.deepcopy(w[idx][key])
         return w_avg
 
     def get_parameters(self):
@@ -77,6 +70,42 @@ class Server:
                     if 'fc' not in key:
                         local_model[key] = w_avg[key]
                 self.clients[client].local_model.load_state_dict(local_model)
+    def aggregate(self):
+        if self.args.policy == 0: # Individual
+            pass
+        elif self.args.policy == 1: # FedAVG
+            local_weights = []
+            for client in range(self.args.num_users):
+                local_weights.append(copy.deepcopy(self.clients[client].local_model.state_dict()))
+            w_avg = self.average_weights(local_weights)
+            self.global_model.load_state_dict(w_avg)
+            for client in range(self.args.num_users):
+                self.clients[client].local_model.load_state_dict(w_avg)
+        elif self.args.policy == 2: # FedEnsemble
+            local_weights = []
+            for client in range(self.args.num_users):
+                local_weights.append(copy.deepcopy(self.clients[client].local_model.state_dict()))
+            w_avg = self.average_weights(local_weights)
+            # 需要ensemble的层
+            for key in w_avg.keys():
+                if 'res2.conv_bn_relu' in key and 'convs' in key:
+                    pos1 = key.find('convs')
+                    pos2 = key.find('.', pos1 + 6)
+                    id = int(key[pos1+6:pos2])
+                    w_avg[key] = local_weights[id][key]
+            #  个性化的层：全连接层和最后一个block的BN层
+            personalize_layer = ['fc','res2.conv_bn_relu_1.1','res2.conv_bn_relu_2.1','res2.conv_bn_relu_3.1']
+            for client in range(0,self.args.num_users):
+                for key in local_weights[client].keys():
+                    per = False
+                    for layer in personalize_layer:
+                        if layer in key:
+                            per = True
+                    if not per:
+                        local_weights[client][key] = w_avg[key]
+                self.clients[client].local_model.load_state_dict(local_weights[client])
+
+
 
     def train(self):
         test_losses = []
@@ -84,6 +113,8 @@ class Server:
         self.local_test_acc = []
         self.local_test_losses = []
         # local_weights = []
+        # 先同步一次
+        self.aggregate()
         for epoch in tqdm(range(self.args.epochs)):
             print(f'Start Training round: {epoch}')
 
@@ -92,16 +123,12 @@ class Server:
                 print('client = ',client)
                 self.clients[client].train()
             # 模块2 聚合
-            # # send parameters to each client
-            weights = self.get_parameters()
-            weight = self.average_weights(weights)
-            self.global_model.load_state_dict(weight)
-            self.send_parameters()
+            self.aggregate()
             # 模块3 预测
             local_test_losses = []
             local_test_acc = []
             # test on each clients
-            for client in range(1):
+            for client in range(self.args.num_users):
                 acc, loss = self.clients[client].inference()
                 print('client = ',client,' acc = ',acc,' loss = ',loss)
                 local_test_acc.append(copy.deepcopy(acc))
@@ -109,8 +136,6 @@ class Server:
 
             test_losses.append(sum(local_test_losses)/len(local_test_losses))
             test_acc.append(sum(local_test_acc)/len(local_test_acc))
-
-
 
             # print the training information in this epoch
 

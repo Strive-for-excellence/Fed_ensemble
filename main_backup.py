@@ -25,19 +25,16 @@ def get_model(args):
         if args.model == "CNN":
             global_model = LeNet_mnist()
     elif args.dataset == 'cifar10':
-        if args.policy == 0:
-            global_model = CifarRes()
-            for i in range(0,args.num_users):
-                # local_model = LeNet_cifar10()
-                client_model.append(CifarRes())
-        elif args.policy == 1:
-            global_model = CifarRes()
-            for i in range(0,args.num_users):
-                client_model.append(CifarRes())
+        if args.policy == 1:
+            global_model = LeNet_cifar10()
         elif args.policy == 2:
-            global_model = CifarResEns(0,4)
-            for i in range(0,args.num_users):
-                client_model.append(CifarResEns(i,args.num_users))
+            global_model = LeNet_cifar10_for_ensemble2(drop_rate=args.drop_rate)
+        elif args.policy == 3:
+            global_model = LeNet_cifar10_for_ensemble2(drop_rate=args.drop_rate)
+        elif args.policy == 4:
+            global_model = LeNet_cifar10_for_ensemble2(drop_rate=args.drop_rate)
+        elif args.policy == 5:
+            global_model = LeNet_cifar10_for_ensemble2(drop_rate=args.drop_rate)
         else:
             print('error input ')
             exit(0)
@@ -45,7 +42,20 @@ def get_model(args):
         print('error input')
         exit(0)
 
+    for i in range( args.num_users):
+        local_model = copy.deepcopy(global_model)
+        if args.policy == 3 or args.policy == 4:
 
+            for name,param in local_model.named_parameters():
+                # print(name)
+                if 'conv2' not in name:
+                    continue
+                required_grad = 'conv2.' + str(i)
+                if required_grad in name:
+                    param.requires_grad = True
+                else:
+                    param.requires_grad = False
+        client_model.append(local_model)
     return global_model,client_model
 
 def train(args):

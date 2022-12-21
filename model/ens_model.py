@@ -85,9 +85,48 @@ class ResBlock(nn.Module):
         y = self.conv_bn_relu_3(y)
         x = x + y
         return x
-
-
 class CifarRes(nn.Module):
+    def __init__(self, num_classes=10):
+        super().__init__()
+        self.pre = nn.Sequential(
+            nn.Conv2d(3, 64, kernel_size=3, padding=1),
+            nn.BatchNorm2d(64),
+            nn.ReLU(),
+        )
+
+        self.res1 = ResBlock(inplane=64, outplane=128)
+        self.conv1 = nn.Sequential(
+            nn.Conv2d(128, 256, kernel_size=3, padding=1),
+            nn.BatchNorm2d(256),
+            nn.ReLU(),
+            nn.MaxPool2d(kernel_size=3, stride=2, padding=1)
+        )
+
+        self.res2 = ResBlock(inplane=256, outplane=512)
+        self.head = nn.Sequential(
+            nn.AdaptiveAvgPool2d((1, 1)),
+            nn.Flatten(),
+        )
+        self.fc = nn.Linear(512, num_classes)
+
+    def compute_feature(self, x):
+        y = self.pre(x)
+        y = self.res1(y)
+        y = self.conv1(y)
+        y = self.res2(y)
+        y = self.head(y)
+        return y
+
+    def forward(self, x):
+        y = self.pre(x)
+        y = self.res1(y)
+        y = self.conv1(y)
+        y = self.res2(y)
+        y = self.head(y)
+        y = self.fc(y)
+        return y
+
+class CifarResEns(nn.Module):
     def __init__(self, client_id, client_num, num_classes=10):
         super().__init__()
         self.client_id = client_id
@@ -133,7 +172,10 @@ class CifarRes(nn.Module):
 
 
 if __name__ == '__main__':
-    model = CifarRes(1, 4, 10)
+    model = CifarResEns(1, 4, 10)
+    for key in model.state_dict():
+        print(key)
+
     print(model)
     x = torch.randn((32, 3, 32, 32))
     y = model(x)

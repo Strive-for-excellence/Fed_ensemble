@@ -17,15 +17,13 @@ plt.rcParams['axes.unicode_minus'] = False
 if __name__ == '__main__':
 
     file_name = {
-        # f'Z:\zhangxingyan\Fed_ensemble\save/Result_dataset(cifar10)_R(1000)_N(4)_E(1)_trainnum(1000)_P(1)_lr(0.01)_name(cifar10_alpha_d_0.1_P_1).json',
+        # f'Z:\zhangxingyan\Fed_ensemble\save/Result_dataset(cifar10)_R(1000)_N(4)_E(1)_trainnum(1000)_P(1)_lr(0.01)_name(cifar10_alpha_d_1_P_1).json',
+        "Individual":
+            f'Z:\zhangxingyan\Fed_ensemble\save/Result_dataset(cifar10)_R(1000)_N(4)_E(1)_trainnum(1000)_P(0)_lr(0.01)_name(cifar10_alpha_d_1_P_0).json',
         "FedAVG":
-            f'Z:\zhangxingyan\Fed_ensemble\save/Result_dataset(cifar10)_R(1000)_N(4)_E(1)_trainnum(1000)_P(2)_lr(0.01)_name(cifar10_alpha_d_0.1_P_2).json',
-        "个性化卷积层":
-            f'Z:\zhangxingyan\Fed_ensemble\save/Result_dataset(cifar10)_R(1000)_N(4)_E(1)_trainnum(1000)_P(3)_lr(0.01)_name(cifar10_alpha_d_0.1_P_3).json',
-        "个性化分类器":
-            f'Z:\zhangxingyan\Fed_ensemble\save/Result_dataset(cifar10)_R(1000)_N(4)_E(1)_trainnum(1000)_P(5)_lr(0.01)_name(cifar10_alpha_d_0.1_P_5).json',
-        "个性化卷积层+分类器":
-            f'Z:\zhangxingyan\Fed_ensemble\save/Result_dataset(cifar10)_R(1000)_N(4)_E(1)_trainnum(1000)_P(4)_lr(0.01)_name(cifar10_alpha_d_0.1_P_4).json',
+            f'Z:\zhangxingyan\Fed_ensemble\save/Result_dataset(cifar10)_R(1000)_N(4)_E(1)_trainnum(1000)_P(1)_lr(0.01)_name(cifar10_alpha_d_1_P_1).json',
+        "FedEns":
+            f'Z:\zhangxingyan\Fed_ensemble\save/Result_dataset(cifar10)_R(1000)_N(4)_E(1)_trainnum(1000)_P(2)_lr(0.01)_name(cifar10_alpha_d_1_P_2).json',
 
     }
     # name = ["Ensebmle model + fedavg","Ensemble model + personalize conv","Ensemble model + personalize conv and classifier","Ensemble model + personalize classifier"]
@@ -55,5 +53,5 @@ if __name__ == '__main__':
     # plt.title('mnist dataset dirichlet alpha=100')
     plt.title('alpha = 0.1')
     # plt.title('cifar10 CNN alpha = 0.1')
-    # plt.show()
+    plt.show()
     plt.savefig('test.png')
