@@ -105,7 +105,24 @@ class Server:
                         local_weights[client][key] = w_avg[key]
                 self.clients[client].local_model.load_state_dict(local_weights[client])
 
+        elif self.args.policy == 3: # FedPer
+            local_weights = []
+            for client in range(self.args.num_users):
+                local_weights.append(copy.deepcopy(self.clients[client].local_model.state_dict()))
+            w_avg = self.average_weights(local_weights)
+            self.global_model.load_state_dict(w_avg)
+            personalize_layer = ['fc']
+            for client in range(0,self.args.num_users):
+                for key in local_weights[client].keys():
+                    per = False
+                    for layer in personalize_layer:
+                        if layer in key:
+                            per = True
+                    if not per:
+                        # print(key)
+                        local_weights[client][key] = w_avg[key]
 
+                self.clients[client].local_model.load_state_dict(local_weights[client])
 
     def train(self):
         test_losses = []
@@ -176,7 +193,6 @@ class Server:
         import json
         json_name = f'./save/Result'\
                 f'_dataset({self.args.dataset})'\
-                f'_R({self.args.epochs})'\
                 f'_N({self.args.num_users})_E({self.args.local_ep})_trainnum({self.args.train_num})'\
                 f'_P({self.args.policy})_lr({self.args.lr})_name({self.args.name}).json'
         # print('json_name = ',json_name)

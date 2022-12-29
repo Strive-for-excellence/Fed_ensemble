@@ -16,15 +16,27 @@ mpl.rcParams['font.family'] = 'SimHei'
 plt.rcParams['axes.unicode_minus'] = False
 if __name__ == '__main__':
 
-    file_name = {
-        # f'Z:\zhangxingyan\Fed_ensemble\save/Result_dataset(cifar10)_R(1000)_N(4)_E(1)_trainnum(1000)_P(1)_lr(0.01)_name(cifar10_alpha_d_1_P_1).json',
-        "Individual":
-            f'Z:\zhangxingyan\Fed_ensemble\save/Result_dataset(cifar10)_R(1000)_N(4)_E(1)_trainnum(1000)_P(0)_lr(0.01)_name(cifar10_alpha_d_1_P_0).json',
-        "FedAVG":
-            f'Z:\zhangxingyan\Fed_ensemble\save/Result_dataset(cifar10)_R(1000)_N(4)_E(1)_trainnum(1000)_P(1)_lr(0.01)_name(cifar10_alpha_d_1_P_1).json',
-        "FedEns":
-            f'Z:\zhangxingyan\Fed_ensemble\save/Result_dataset(cifar10)_R(1000)_N(4)_E(1)_trainnum(1000)_P(2)_lr(0.01)_name(cifar10_alpha_d_1_P_2).json',
+    # file_name = {
+    #     # f'Z:\zhangxingyan\Fed_ensemble\save/Result_dataset(cifar10)_N(4)_E(1)_trainnum(1000)_P(1)_lr(0.01)_name(cifar10_alpha_d_100_P_1).json',
+    #     "Individual":
+    #         f'Z:\zhangxingyan\Fed_ensemble\save/Result_dataset(cifar10)_N(4)_E(1)_trainnum(1000)_P(0)_lr(0.01)_name(cifar10_alpha_d_100_P_0).json',
+    #     "FedAVG":
+    #         f'Z:\zhangxingyan\Fed_ensemble\save/Result_dataset(cifar10)_N(4)_E(1)_trainnum(1000)_P(1)_lr(0.01)_name(cifar10_alpha_d_100_P_1).json',
+    #     "FedPer":
+    #         f'Z:\zhangxingyan\Fed_ensemble\save/Result_dataset(cifar10)_N(4)_E(1)_trainnum(1000)_P(3)_lr(0.01)_name(cifar10_alpha_d_100_P_3).json',
+    #     "FedEns":
+    #         f'Z:\zhangxingyan\Fed_ensemble\save/Result_dataset(cifar10)_N(4)_E(1)_trainnum(1000)_P(2)_lr(0.01)_name(cifar10_alpha_d_100_P_2).json',
+    # }
 
+    file_name = {
+        "Individual":
+            f'Z:\zhangxingyan\Fed_ensemble\save/Result_dataset(mnist)_N(4)_E(1)_trainnum(1000)_P(0)_lr(0.01)_name(mnist_alpha_d_100_P_0).json',
+        "FedAVG":
+            f'Z:\zhangxingyan\Fed_ensemble\save/Result_dataset(mnist)_N(4)_E(1)_trainnum(1000)_P(1)_lr(0.01)_name(mnist_alpha_d_100_P_1).json',
+        "FedPer":
+            f'Z:\zhangxingyan\Fed_ensemble\save/Result_dataset(mnist)_N(4)_E(1)_trainnum(1000)_P(3)_lr(0.01)_name(mnist_alpha_d_100_P_3).json',
+        "FedEns":
+            f'Z:\zhangxingyan\Fed_ensemble\save/Result_dataset(mnist)_N(4)_E(1)_trainnum(1000)_P(2)_lr(0.01)_name(mnist_alpha_d_100_P_2).json',
     }
     # name = ["Ensebmle model + fedavg","Ensemble model + personalize conv","Ensemble model + personalize conv and classifier","Ensemble model + personalize classifier"]
     # name = ["Fedavg","Personalize Classifier","Ensemble model + personalize conv and classifier","Ensemble model + personalize classifier"]
@@ -38,7 +50,7 @@ if __name__ == '__main__':
             f  = json.load(f)
             num = len(f['test_acc'])
             # for i in range(num):
-            plt.plot(f['test_acc'][:], label=name)
+            plt.plot(f['test_acc'][:40], label=name)
 
             print(f" size = {len(f['test_acc'])}",end=' ')
                 # print(f"client = {i} best_acc")
@@ -51,7 +63,7 @@ if __name__ == '__main__':
         plt.ylabel('acc')
         plt.legend()
     # plt.title('mnist dataset dirichlet alpha=100')
-    plt.title('alpha = 0.1')
-    # plt.title('cifar10 CNN alpha = 0.1')
-    plt.show()
+    plt.title('alpha = 100')
+    # plt.title('cifar10 CNN alpha = 0.5')
+    # plt.show()
     plt.savefig('test.png')

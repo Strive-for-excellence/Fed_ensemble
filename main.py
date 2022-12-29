@@ -21,9 +21,26 @@ def get_model(args):
     global_model = ResNet18(num_classes=args.num_classes)
     # mnist
     if args.dataset == 'mnist':
-        global_model = DNN(1*28*28,10,1200,args)
-        if args.model == "CNN":
-            global_model = LeNet_mnist()
+        if args.policy == 0:
+            global_model = MnistRes()
+            for i in range(0,args.num_users):
+                # local_model = LeNet_cifar10()
+                client_model.append(MnistRes())
+        elif args.policy == 1:
+            global_model = MnistRes()
+            for i in range(0,args.num_users):
+                client_model.append(MnistRes())
+        elif args.policy == 2:
+            global_model = MnistResEns(0,4)
+            for i in range(0,args.num_users):
+                client_model.append(MnistResEns(i,args.num_users))
+        elif args.policy == 3:
+            global_model = MnistRes()
+            for i in range( 0,args.num_users):
+                client_model.append(MnistRes())
+        else:
+            print('error input ')
+            exit(0)
     elif args.dataset == 'cifar10':
         if args.policy == 0:
             global_model = CifarRes()
@@ -38,6 +55,10 @@ def get_model(args):
             global_model = CifarResEns(0,4)
             for i in range(0,args.num_users):
                 client_model.append(CifarResEns(i,args.num_users))
+        elif args.policy == 3:
+            global_model = CifarRes()
+            for i in range( 0,args.num_users):
+                client_model.append(CifarRes())
         else:
             print('error input ')
             exit(0)
