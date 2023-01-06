@@ -255,6 +255,7 @@ class MnistResEns(nn.Module):
         return y
 
 
+
 if __name__ == '__main__':
     model = CifarResEns(1, 4, 10)
     for key in model.state_dict():

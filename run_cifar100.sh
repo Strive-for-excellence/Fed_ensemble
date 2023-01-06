@@ -1,0 +1,3 @@
+#!/bin/bash
+echo python3 main.py  --dataset cifar100 --num_classes 100 --epochs 500  --num_users 32 --local_ep 1 --local_bs 100 --train_num 500  --test_num 100 --lr 0.01 --policy $1  --iid 0 --noniid dirichlet --alpha $2  --name cifar100_alpha_d_$2_P_$1
+python3 main.py  --dataset cifar100 --num_classes 100 --epochs 500  --num_users 32 --local_ep 1 --local_bs 100 --train_num 500  --test_num 100 --lr 0.01 --policy $1  --iid 0 --noniid dirichlet --alpha $2  --name cifar100_alpha_d_$2_P_$1

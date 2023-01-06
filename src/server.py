@@ -13,7 +13,7 @@ class Server:
     local_model is the model architecture of each client;
     global_model is the model need to be aggregated;
     '''
-    def __init__(self, device, global_model,clients, args, pub_data=''):
+    def __init__(self, device, global_model,clients, args, test_data=''):
         self.device = device
         self.global_model = global_model
         self.args = args
@@ -23,9 +23,9 @@ class Server:
         # 获取全局数据集
         # self.get_global_dataset(domains, args)
         # 生成用户
-        self.pub_data = pub_data
+        self.test_data = test_data
         self.clients = clients
-        self.send_parameters()
+        # self.send_parameters()
         self.loss_kl = nn.KLDivLoss(reduction='batchmean')
         self.loss_ce = nn.CrossEntropyLoss()
 
@@ -46,30 +46,30 @@ class Server:
             w_avg[key] = torch.div(w_avg[key],  cnt)
         return w_avg
 
-    def get_parameters(self):
-        local_weights = []
-        for client in range(self.args.num_users):
-            local_weights.append(copy.deepcopy(self.clients[client].local_model.state_dict()))
-        return local_weights
-
-    def send_parameters(self):
-        w_avg = self.global_model.state_dict()
-        if self.args.policy == 0:   # separate training
-            return
-        elif self.args.policy >=1 and self.args.policy <= 3: # collaborate train a global model
-            for client in range(self.args.num_users):
-                local_model = self.clients[client].local_model.state_dict()
-                for key in local_model.keys():
-                    local_model[key] = w_avg[key]
-                self.clients[client].local_model.load_state_dict(local_model)
-        elif self.args.policy == 4 and self.args.policy == 5:
-    #         分类器不共享
-            for client in range(self.args.num_users):
-                local_model = self.clients[client].local_model.state_dict()
-                for key in local_model.keys():
-                    if 'fc' not in key:
-                        local_model[key] = w_avg[key]
-                self.clients[client].local_model.load_state_dict(local_model)
+    # def get_parameters(self):
+    #     local_weights = []
+    #     for client in range(self.args.num_users):
+    #         local_weights.append(copy.deepcopy(self.clients[client].local_model.state_dict()))
+    #     return local_weights
+    #
+    # def send_parameters(self):
+    #     w_avg = self.global_model.state_dict()
+    #     if self.args.policy == 0:   # separate training
+    #         return
+    #     elif self.args.policy >=1 and self.args.policy <= 3: # collaborate train a global model
+    #         for client in range(self.args.num_users):
+    #             local_model = self.clients[client].local_model.state_dict()
+    #             for key in local_model.keys():
+    #                 local_model[key] = w_avg[key]
+    #             self.clients[client].local_model.load_state_dict(local_model)
+    #     elif self.args.policy == 4 and self.args.policy == 5:
+    # #         分类器不共享
+    #         for client in range(self.args.num_users):
+    #             local_model = self.clients[client].local_model.state_dict()
+    #             for key in local_model.keys():
+    #                 if 'fc' not in key:
+    #                     local_model[key] = w_avg[key]
+    #             self.clients[client].local_model.load_state_dict(local_model)
     def aggregate(self):
         if self.args.policy == 0: # Individual
             pass
@@ -123,12 +123,53 @@ class Server:
                         local_weights[client][key] = w_avg[key]
 
                 self.clients[client].local_model.load_state_dict(local_weights[client])
+        elif self.args.policy == 4: # FenEns_global
+            local_weights = []
+            for client in range(self.args.num_users):
+                local_weights.append(copy.deepcopy(self.clients[client].local_model.state_dict()))
+            w_avg = self.average_weights(local_weights)
+            # 需要ensemble的层
+            for key in w_avg.keys():
+                if 'res2.conv_bn_relu' in key and 'convs' in key:
+                    pos1 = key.find('convs')
+                    pos2 = key.find('.', pos1 + 6)
+                    id = int(key[pos1+6:pos2])
+                    w_avg[key] = local_weights[id][key]
+            #  使用全局模型
+            personalize_layer = []
+            for client in range(0,self.args.num_users):
+                self.clients[client].local_model.load_state_dict(local_weights[client])
+            self.global_model.load_state_dict(w_avg)
+    # 在全局数据集上测试
+    def inference(self):
+        self.global_model.eval()
+        loss, total, correct = 0.0, 0.0, 0.0
+        with torch.no_grad():
+            for batch_idx, (images, labels) in enumerate(self.test_data):
+                images, labels = images.to(self.device), labels.to(self.device)
 
+                # inference
+                outputs = self.global_model(images)
+                batch_loss = self.global_model(outputs, labels.long())
+                loss += batch_loss.item()
+
+                # prediction
+                _, pred_labels = torch.max(outputs, 1)
+                pred_labels = pred_labels.view(-1)
+                correct += torch.sum(torch.eq(pred_labels, labels.long())).item()
+                total += len(labels)
+
+            accuracy = correct / total
+            loss = loss / total
+        return accuracy, loss
     def train(self):
-        test_losses = []
-        test_acc = []
+
+        self.global_test_losses = []
+        self.global_test_accs = []
         self.local_test_acc = []
         self.local_test_losses = []
+        self.test_losses = []
+        self.test_accs = []
         # local_weights = []
         # 先同步一次
         self.aggregate()
@@ -143,41 +184,50 @@ class Server:
             self.aggregate()
             # 模块3 预测
             local_test_losses = []
-            local_test_acc = []
+            local_test_accs = []
             # test on each clients
             for client in range(self.args.num_users):
                 acc, loss = self.clients[client].inference()
                 print('client = ',client,' acc = ',acc,' loss = ',loss)
-                local_test_acc.append(copy.deepcopy(acc))
+                local_test_accs.append(copy.deepcopy(acc))
                 local_test_losses.append(copy.deepcopy(loss))
+            policy_list = [1,4] # FedAVG 和 FedEns的全部聚合
+            if self.args.policy in policy_list:
+                global_test_acc,global_test_loss = self.inference()
+            else:
+                global_test_acc, global_test_loss = 0.0,0.0
+            self.local_test_accs.append(local_test_accs)
+            self.local_test_losses.append(local_test_losses)
 
-            test_losses.append(sum(local_test_losses)/len(local_test_losses))
-            test_acc.append(sum(local_test_acc)/len(local_test_acc))
+            self.test_losses.append(sum(local_test_losses)/len(local_test_losses))
+            self.test_accs.append(sum(local_test_accs)/len(local_test_accs))
+
+            self.global_test_accs.append(global_test_acc)
+            self.global_test_losses.append(global_test_loss)
 
             # print the training information in this epoch
 
             print(f'\nCommunication Round: {epoch}   Policy: {self.args.policy}')
-            print(f'Avg testing Loss: {test_losses[-1]}')
-            print(f'Avg test Accuracy: {test_acc[-1]}')
-            self.local_test_acc.append(local_test_acc)
-            self.local_test_losses.append(local_test_losses)
-            self.test_losses = test_losses
-            self.test_acc = test_acc
+            print(f'Avg testing Loss: {self.test_losses[-1]}')
+            print(f'Avg test Accuracy: {self.test_accs[-1]}')
+            print(f'global testing Loss: {self.global_test_losses[-1]}')
+            print(f'global test Accuracy: {self.global_test_accs[-1]}')
+
+
             # if self.args.early_stop and len(test_losses)>100:
             #   if min(test_losses[0:-50]) < min(test_losses[-50:]):
             #       break
             if epoch%10 == 0:
                 self.save_result()
 
-        self.test_losses = test_losses
-        self.test_acc = test_acc
+
         self.save_result()
         self.print_res()
         return
 
     def print_res(self):
-        print(f'Final Accuracy :{self.test_acc[-1]}')
-        print(f'Best Accuracy:{max(self.test_acc)}')
+        print(f'Final Accuracy :{self.test_accs[-1]}')
+        print(f'Best Accuracy:{max(self.test_acsc)}')
         # for domain in self.domains:
         #     print(f'domain: {domain}')
         #     print(f'Best accuracy: {max(self.domain_test_acc[domain])}')
@@ -199,9 +249,11 @@ class Server:
         with open(json_name,mode='w+') as f:
             result = {}
             result['test_losses'] = self.test_losses
-            result['test_acc'] = self.test_acc
+            result['test_accs'] = self.test_accs
             result['local_test_losses'] = self.local_test_losses
-            result['local_test_acc'] = self.local_test_acc
+            result['local_test_accs'] = self.local_test_accs
+            result['global_test_losses'] = self.global_test_losses
+            result['global_test_accs'] = self.global_test_accs
             json.dump(result,f)
         print(json_name)
     def save_model(self,state='before_finetune'):

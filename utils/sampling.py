@@ -46,8 +46,8 @@ def dirichlet_noniid(train_dataset, test_dataset, num_users, alpha, seed, args):
             temp_train_sample -= num_train
             temp_test_sample -= num_test
             assert num_train >= 0 and num_test >= 0
-            train_dict_users[i] += random_state.choice(train_idxs_classes[j], num_train, replace=False).tolist()
-            test_dict_users[i] += random_state.choice(test_idxs_classes[j], num_test, replace=False).tolist()
+            train_dict_users[i] += random_state.choice(train_idxs_classes[j], num_train, replace=True).tolist()
+            test_dict_users[i] += random_state.choice(test_idxs_classes[j], num_test, replace=True).tolist()
         train_dict_users[i] = np.array(train_dict_users[i])
         test_dict_users[i] = np.array(test_dict_users[i])
     return train_dict_users, test_dict_users

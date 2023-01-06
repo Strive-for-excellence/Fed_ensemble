@@ -22,8 +22,8 @@ def args_parser():
     parser.add_argument('--step_size',type=int,default='30',help='step size  of StepLR')
     # dataset argument
     parser.add_argument('--data_dir', type=str, default='./data/Digit-Five/')
-    parser.add_argument('--train_num', type=int, default=1000, help='number of training samples for training')
-    parser.add_argument('--test_num', type=int, default=1000, help='number of testing samples for training')
+    parser.add_argument('--train_num', type=int, default=500, help='number of training samples for training')
+    parser.add_argument('--test_num', type=int, default=100, help='number of testing samples for training')
     parser.add_argument('--scale', type=int, default=32, help='image size after loading')
     # parser.add_argument('--class_nums', type=int, default=10, help='class number')
     parser.add_argument('--num_classes', type=int, default=10, help="number of classes")

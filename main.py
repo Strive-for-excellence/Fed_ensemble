@@ -62,6 +62,27 @@ def get_model(args):
         else:
             print('error input ')
             exit(0)
+    elif args.dataset == 'cifar100':
+        if args.policy == 0:
+            global_model = CifarRes(num_classes=100)
+            for i in range(0,args.num_users):
+                # local_model = LeNet_cifar10()
+                client_model.append(CifarRes(num_classes=100))
+        elif args.policy == 1:
+            global_model = CifarRes(num_classes=100)
+            for i in range(0,args.num_users):
+                client_model.append(CifarRes(num_classes=100))
+        elif args.policy == 2:
+            global_model = CifarResEns(0,args.num_users,num_classes=100)
+            for i in range(0,args.num_users):
+                client_model.append(CifarResEns(i,args.num_users,num_classes=100))
+        elif args.policy == 3:
+            global_model = CifarRes(num_classes=100)
+            for i in range( 0,args.num_users):
+                client_model.append(CifarRes(num_classes=100))
+        else:
+            print('error input ')
+            exit(0)
     else:
         print('error input')
         exit(0)
