@@ -15,15 +15,15 @@ os.environ['KMP_DUPLICATE_LIB_OK'] = 'TRUE'
 mpl.rcParams['font.family'] = 'SimHei'
 plt.rcParams['axes.unicode_minus'] = False
 if __name__ == '__main__':
-    alpha = 1
+    alpha = 0.1
     dataset = 'cifar100'
     # cifar100 0.05 2 3
     file_name = {
-        # f'Z:\zhangxingyan\Fed_ensemble\save/Result_dataset({dataset})_N(32)_E(1)_trainnum(500)_P(1)_lr(0.01)_name({dataset}_alpha_d_{alpha}_P_1).json',
-        "Individual":   f'Z:\zhangxingyan\Fed_ensemble\save/Result_dataset({dataset})_N(32)_E(1)_trainnum(500)_P(0)_lr(0.01)_name({dataset}_alpha_d_{alpha}_P_0).json',
-        "FedAVG":       f'Z:\zhangxingyan\Fed_ensemble\save/Result_dataset({dataset})_N(32)_E(1)_trainnum(500)_P(1)_lr(0.01)_name({dataset}_alpha_d_{alpha}_P_1).json',
-        "FedPer":       f'Z:\zhangxingyan\Fed_ensemble\save/Result_dataset({dataset})_N(32)_E(1)_trainnum(500)_P(3)_lr(0.01)_name({dataset}_alpha_d_{alpha}_P_3).json',
-        "FedEns":       f'Z:\zhangxingyan\Fed_ensemble\save/Result_dataset({dataset})_N(32)_E(1)_trainnum(500)_P(2)_lr(0.01)_name({dataset}_alpha_d_{alpha}_P_2).json',
+
+        "FedAVG":
+            f'Z:\zhangxingyan\Fed_ensemble\save/Result_dataset({dataset})_N(32)_E(1)_trainnum(500)_P(1)_lr(0.01)_name({dataset}_alpha_d_{alpha}_P_1).json',
+        "FedEns":
+            f'Z:\zhangxingyan\Fed_ensemble\save/Result_dataset({dataset})_N(32)_E(1)_trainnum(500)_P(4)_lr(0.01)_name({dataset}_alpha_d_{alpha}_P_4).json',
     }
 
 
@@ -31,10 +31,7 @@ if __name__ == '__main__':
         try:
             with open(file) as f:
                 f  = json.load(f)
-                key = 'test_acc'
-                if key not in f.keys():
-                    key = 'test_accs'
-
+                key = 'global_test_accs'
                 num = len(f[key])
                 # for i in range(num):
                 plt.plot(f[key][:], label=name)

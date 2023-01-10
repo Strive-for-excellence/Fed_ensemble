@@ -8,7 +8,7 @@
 #### 1.  Res 模型， fedavg聚合
 #### 2.  ResEns 模型， 个性化分类器，拼接特征
 #### 3.  Res模型， 个性化分类器
-
+#### 4.  ResEns 模型， 分类器也共享
         python3 main.py  --dataset cifar10 --num_classes 10 --epochs 500  --num_users 32 --local_ep 1 --local_bs 100 --train_num 500  --test_num 100 --lr 0.01 \
         --policy 0  \
         --iid 0 --noniid dirichlet --alpha 0.5  \
@@ -28,6 +28,11 @@
         --policy 3   \
         --iid 0 --noniid dirichlet --alpha 0.5  \
         --name cifar10_alpha_d_0.5_P_3
+
+        python3 main.py  --dataset cifar10 --num_classes 10 --epochs 500  --num_users 32 --local_ep 1 --local_bs 100 --train_num 500 --test_num 100 --lr 0.01 \
+        --policy 4   \
+        --iid 0 --noniid dirichlet --alpha 0.5  \
+        --name cifar10_alpha_d_0.5_P_4
 # cifar100
 ## 0.01 0.1 0.5
         python3 main.py  --dataset cifar100 --num_classes 100 --epochs 500  --num_users 32 --local_ep 1 --local_bs 100 --train_num 500  --test_num 100 --lr 0.01 \

@@ -13,7 +13,7 @@ class Server:
     local_model is the model architecture of each client;
     global_model is the model need to be aggregated;
     '''
-    def __init__(self, device, global_model,clients, args, test_data=''):
+    def __init__(self, device, global_model,clients, args, test_data_loader=''):
         self.device = device
         self.global_model = global_model
         self.args = args
@@ -23,13 +23,14 @@ class Server:
         # 获取全局数据集
         # self.get_global_dataset(domains, args)
         # 生成用户
-        self.test_data = test_data
+        self.test_data_loader = test_data_loader
         self.clients = clients
         # self.send_parameters()
         self.loss_kl = nn.KLDivLoss(reduction='batchmean')
         self.loss_ce = nn.CrossEntropyLoss()
-
+        self.global_model.to(device)
         self.pre_result = []
+        self.criterion = torch.nn.CrossEntropyLoss().to(self.device)
 
     def average_weights(self, w):
         '''
@@ -136,21 +137,21 @@ class Server:
                     id = int(key[pos1+6:pos2])
                     w_avg[key] = local_weights[id][key]
             #  使用全局模型
-            personalize_layer = []
             for client in range(0,self.args.num_users):
-                self.clients[client].local_model.load_state_dict(local_weights[client])
+                self.clients[client].local_model.load_state_dict(w_avg)
+            global_model_state_dict = self.global_model.state_dict()
             self.global_model.load_state_dict(w_avg)
     # 在全局数据集上测试
     def inference(self):
         self.global_model.eval()
         loss, total, correct = 0.0, 0.0, 0.0
         with torch.no_grad():
-            for batch_idx, (images, labels) in enumerate(self.test_data):
+            for batch_idx, (images, labels) in enumerate(self.test_data_loader):
                 images, labels = images.to(self.device), labels.to(self.device)
 
                 # inference
                 outputs = self.global_model(images)
-                batch_loss = self.global_model(outputs, labels.long())
+                batch_loss = self.criterion(outputs, labels.long())
                 loss += batch_loss.item()
 
                 # prediction
@@ -166,7 +167,7 @@ class Server:
 
         self.global_test_losses = []
         self.global_test_accs = []
-        self.local_test_acc = []
+        self.local_test_accs = []
         self.local_test_losses = []
         self.test_losses = []
         self.test_accs = []
@@ -191,7 +192,7 @@ class Server:
                 print('client = ',client,' acc = ',acc,' loss = ',loss)
                 local_test_accs.append(copy.deepcopy(acc))
                 local_test_losses.append(copy.deepcopy(loss))
-            policy_list = [1,4] # FedAVG 和 FedEns的全部聚合
+            policy_list = [1,4] # FedAVG 和 FedEns的全部聚合,在平衡数据集上测试
             if self.args.policy in policy_list:
                 global_test_acc,global_test_loss = self.inference()
             else:
@@ -227,7 +228,7 @@ class Server:
 
     def print_res(self):
         print(f'Final Accuracy :{self.test_accs[-1]}')
-        print(f'Best Accuracy:{max(self.test_acsc)}')
+        print(f'Best Accuracy:{max(self.test_accs)}')
         # for domain in self.domains:
         #     print(f'domain: {domain}')
         #     print(f'Best accuracy: {max(self.domain_test_acc[domain])}')

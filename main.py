@@ -59,6 +59,10 @@ def get_model(args):
             global_model = CifarRes()
             for i in range( 0,args.num_users):
                 client_model.append(CifarRes())
+        elif args.policy == 4:
+            global_model = CifarResEns(0,args.num_users)
+            for i in range(0,args.num_users):
+                client_model.append(CifarResEns(i,args.num_users))
         else:
             print('error input ')
             exit(0)
@@ -80,14 +84,18 @@ def get_model(args):
             global_model = CifarRes(num_classes=100)
             for i in range( 0,args.num_users):
                 client_model.append(CifarRes(num_classes=100))
+        elif args.policy == 4:
+            global_model = CifarResEns(0,args.num_users,num_classes=100)
+            for i in range(0,args.num_users):
+                client_model.append(CifarResEns(i,args.num_users,num_classes=100))
         else:
-            print('error input ')
+            print('error input policy')
             exit(0)
     else:
-        print('error input')
+        print('error input dataset')
         exit(0)
 
-
+    print(global_model)
     return global_model,client_model
 
 def train(args):
@@ -107,7 +115,7 @@ def train(args):
     clients = [Client(device, client_model[i], dataset.train[i], dataset.test[i], args) for i in range(args.num_users)]
 
     train_set,test_set = get_pub_data(args.pub_data,args)
-    server = Server(device,global_model,clients,args,pub_data=train_set)
+    server = Server(device,global_model,clients,args,test_data_loader=test_set)
     server.train()
     # server.fine_fune()
     # server.train()
