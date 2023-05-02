@@ -8,10 +8,11 @@ import torch.nn.functional as F
 from utils.get_model import Get_model
 from utils import *
 class Client:
-    def __init__(self, device,  train_dataloader, test_dataloader, args):
+    def __init__(self, device,  train_dataloader, test_dataloader, args,client_models,client_idxs):
         self.device = device
         # model = Get_model()
-        self.local_models = [Get_model(args) for i in range(args.model_num_per_client)]
+        self.local_models = client_models
+        self.model_idxs = client_idxs
 
         self.train_dataloader = train_dataloader
         self.test_dataloader = test_dataloader
@@ -56,25 +57,13 @@ class Client:
                     losses.append(loss_i.reshape(1))
                     # losses.append(loss_i)
                 loss = torch.cat(losses).reshape(1,-1)
-                if self.args.policy == 6:
-                    self.optimizers.zero_grad()
-                    for ls in losses:
-                        ls.backward()
-                    self.optimizers.step()
-                    loss = torch.sum(loss)
-                else:
-                    if self.args.policy == 2 or self.args.policy == 3:
-                        # self.Linear = self.Linear.data
-                        loss = loss*self.Linear
-                        loss = torch.sum(loss)
-                    elif self.args.policy == 4:
-                        loss = torch.sum(loss)
-                    elif self.args.policy == 5:
-                        loss = -torch.log(torch.sum(torch.exp(-loss)*self.Linear))
-                    # loss =  torch.sum(loss)
-                    self.optimizers.zero_grad()
-                    loss.backward()
-                    self.optimizers.step()
+                loss = loss*self.Linear
+                loss = torch.sum(loss)
+                loss = torch.sum(loss)
+                # loss =  torch.sum(loss)
+                self.optimizers.zero_grad()
+                loss.backward()
+                self.optimizers.step()
                 batch_loss.append(loss.item() / len(labels))
                     # loss.backward()
                     # self.optimizers[i].step()
@@ -127,6 +116,21 @@ class Client:
                 pub_predict.append(outputs)
                 # images,labels = images.to('cpu'), labels.to('cpu')
         return pub_predict
+    def predict_data(self,images):
+        with torch.no_grad():
+            # for batch_idx, (images, labels) in enumerate(self.test_dataloader):
+            images = images.to(self.device)
+            outputs = []
+            for i in range(self.model_num_per_client):
+                log_probs = self.local_models[i](images)
+                outputs.append(log_probs)
+            outputs = torch.stack(outputs)
+            tmp = copy.deepcopy(self.Linear.data).T
+            tmp = tmp.resize(self.args.model_num_per_client,1,1)
+            predict = outputs*tmp
+            predict = torch.sum(predict,dim=0)
+            return predict
+
     # def train_on_pub_data(self,pub_dataloader,index,pub_predict_list):
     #     self.local_model.train()
     #     for batch_idx, (images, labels) in enumerate(pub_dataloader):

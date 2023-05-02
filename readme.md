@@ -1,21 +1,6 @@
 
 #主要思想
-    解决的问题：联邦学习数据异质性
-    导致的问题：模型异质性，模型融合后效果下降
-    加强模型融合的效果，除了模型聚合，还有模型的蒸馏
-    目前方法存在的问题：Fedprox 加入近端项限制本地模型和全局模型的距离，限制了本地模型的发挥
-    解决方法： 将集成学习引入到联邦学习中，共同训练M个模型，第i个设备选m个，本地信息交流：模型的互学习，全局的模型交流：信息融合
-    优点：引入更鲁棒的集成学习方法
-
-save_backup: 初始化不同：先分发
-save_bacup2: 初始化：先聚合后分发
-policy = 2,ensemble learning + mixture
-policy = 4，Ensemble learning
-policy = 5, Ensemble learning + mixture 优化
-    最简单的mixture of experts实现
-![img.png](img.png)
-
-
+policy = 3:
 202305052 update
 1. 增加公开数据集
 2. 20个client，每五个一簇使用不同结构的模型

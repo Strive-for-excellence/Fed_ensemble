@@ -83,6 +83,7 @@ def args_parser():
 
     parser.add_argument('--model_num',type=int,default=20,help='model_num')
     parser.add_argument('--model_num_per_client',type = int,default=2,help='model_num_per_client')
+    parser.add_argument('--model_type_num',type = int,default=4,help='model_type_num')
     parser.add_argument('--global_test_data_num', type=int, default=-1, help='model_num_per_client')
     parser.add_argument('--share_layer',type=int,default=1,help='share bottom ResNet8')
     args = parser.parse_args()

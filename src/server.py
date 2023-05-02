@@ -14,7 +14,7 @@ class Server:
     local_model is the model architecture of each client;
     global_model is the model need to be aggregated;
     '''
-    def __init__(self, device, global_models,clients, args, test_data_loader=''):
+    def __init__(self, device, global_models,clients, args, test_data_loader='',pub_data=''):
         self.device = device
         self.global_models = global_models
         self.args = args
@@ -25,6 +25,7 @@ class Server:
         # self.get_global_dataset(domains, args)
         # 生成用户
         self.test_data_loader = test_data_loader
+        self.pub_data = pub_data
         self.clients = clients
         # self.send_parameters()
         self.loss_kl = nn.KLDivLoss(reduction='batchmean')
@@ -34,7 +35,7 @@ class Server:
             self.global_models[i].to(device)
         self.pre_result = []
         self.criterion = torch.nn.CrossEntropyLoss().to(self.device)
-
+        self.optimizers = [torch.optim.SGD(global_models[i].parameters(), lr=self.args.lr, momentum=self.args.momentum) for i in range(len(global_models))]
     def average_weights(self, w):
         '''
         :param w: weights of each client
@@ -90,63 +91,145 @@ class Server:
         #         合并K个模型
         else:
             for client in range(self.args.num_users):
-                for i in range(self.model_num):
-                    self.clients[client].local_models[i].load_state_dict(self.global_models[i].state_dict())
+                for i, idx in enumerate(self.clients[client].model_idxs):
+                    self.clients[client].local_models[i].load_state_dict(self.global_models[idx].state_dict())
     def aggregate(self):
         if self.args.policy == 0: # Individual
             pass
         #         合并K个模型
-        elif self.args.policy in list([2,4,5,6]):
+        # elif self.args.policy in list([2,4,5,6]):
+        #     w_list = [[] for i in range(self.args.model_num)]
+        #     for client in range(self.args.num_users):
+        #         for i in range(self.model_num):
+        #             w_list[i].append(self.clients[client].local_models[i].state_dict())
+        #     for i,ls in enumerate(w_list):
+        #             self.global_models[i].load_state_dict(self.average_weights(ls))
+        #     for client in range(self.args.num_users):
+        #         for i in range(self.model_num):
+        #             self.clients[client].local_models[i].load_state_dict(self.global_models[i].state_dict())
+        # elif
+        elif self.args.policy == 3 or self.args.policy == 4:
             w_list = [[] for i in range(self.args.model_num)]
+            # all_weight = []
             for client in range(self.args.num_users):
-                for i in range(self.model_num):
-                    w_list[i].append(self.clients[client].local_models[i].state_dict())
-            for i,ls in enumerate(w_list):
+                for i, idx in enumerate(self.clients[client].model_idxs):
+                    w_list[idx].append(self.clients[client].local_models[i].state_dict())
+                    # all_weight.append(self.clients[client].local_models[i].state_dict())
+            for i, ls in enumerate(w_list):
+                if ls:
                     self.global_models[i].load_state_dict(self.average_weights(ls))
+            if self.args.policy == 4:
+                self.col_train()
             for client in range(self.args.num_users):
-                for i in range(self.model_num):
-                    self.clients[client].local_models[i].load_state_dict(self.global_models[i].state_dict())
-        elif self.args.policy == 3:
-            w_list = [[] for i in range(self.args.model_num)]
-            for client in range(self.args.num_users):
-                for i in range(self.model_num):
-                    w_list[i].append(self.clients[client].local_models[i].state_dict())
-            all_weight = [] # 求所有参数的平均
-            for i,ls in enumerate(w_list):
-                self.global_models[i].load_state_dict(self.average_weights(ls))
-                all_weight.append(self.average_weights(ls))
-            all_weight = self.average_weights(all_weight)
-            for i in range(self.model_num):
-                state = self.global_models[i].state_dict()
-                a = ['conv.weight', 'bn.weight', 'bn.bias', 'bn.running_mean', 'bn.running_var',
-                     'bn.num_batches_tracked', 'layer1', 'layer2', 'layer3', ]
-
-                if self.args.share_layer == 1:
-                    fusion_layer = ['conv.weight', 'bn.weight', 'bn.bias', 'bn.running_mean', 'bn.running_var','bn.num_batches_tracked']
-                elif self.args.share_layer == 2:
-                    fusion_layer = ['conv.weight', 'bn.weight', 'bn.bias', 'bn.running_mean', 'bn.running_var',
-                     'bn.num_batches_tracked', 'layer1']
-                elif self.args.share_layer == 3:
-                    fusion_layer = ['conv.weight', 'bn.weight', 'bn.bias', 'bn.running_mean', 'bn.running_var',
-                                    'bn.num_batches_tracked', 'layer1', 'layer2']
-                elif self.args.share_layer == 4:
-                    fusion_layer = ['conv.weight', 'bn.weight', 'bn.bias', 'bn.running_mean', 'bn.running_var',
-                                    'bn.num_batches_tracked', 'layer1', 'layer2','layer3']
-                for key in all_weight.keys():
-                    for fusion in fusion_layer:
-                        if fusion in key:
-                            state[key] = all_weight[key]
-                            break
-                self.global_models[i].load_state_dict(state)
-            for client in range(self.args.num_users):
-                for i in range(self.model_num):
-                    self.clients[client].local_models[i].load_state_dict(self.global_models[i].state_dict())
+                for i, idx in enumerate(self.clients[client].model_idxs):
+                    self.clients[client].local_models[i].load_state_dict(self.global_models[idx].state_dict())
 
         else:
             print('error policy')
 
+    # use_avg_loss
+    # 1 平均
+    # 2 加权
+    # 其它忽略
+    def col_train(self):
+        # with tqdm(total=self.args.pub_data_num) as pbar:
+        if 1:
+            for batch_idx, (images, labels) in enumerate(self.pub_data):
 
+                data_num = images.shape[0]
+                outputs = []
+                images, labels = images.to(self.device), labels.to(self.device)
+                images, labels = Variable(images), Variable(labels)
+                # with torch.no_grad():
 
+                #    use_avg_loss = 1
+                # FedMd
+                if self.args.use_avg_loss == 1:
+                    with torch.no_grad():
+                        # model.eval()
+                        for client in range(self.args.num_users):
+                            self.clients[client].local_model.eval()
+                            outputs.append(F.softmax(self.clients[client].local_model(images), dim=1))
+                    avg_soft_label = Variable(sum(outputs) / len(outputs))
+                #
+                elif self.args.use_avg_loss == 2 or \
+                        self.args.use_avg_loss == 4 or \
+                        self.args.use_avg_loss == 5:
+                    # 2,5 只需要预测一次
+                    if self.args.use_avg_loss == 2 or \
+                            self.args.use_avg_loss == 5:
+                        with torch.no_grad():
+                            for client in range(self.args.num_users):
+                                # self.clients[client].local_model.eval()
+                                outputs.append(F.softmax(self.clients[client].predict_data(images), dim=1))
+                        outputs_tmp = [outputs[i].cpu().numpy() for i in
+                                       range(self.args.num_users)]
+                    # # 4 蒙特卡洛需要预测多次
+                    # elif self.args.use_avg_loss == 4:
+                    #     client_item_mean = []
+                    #     with torch.no_grad():
+                    #         for client in range(self.args.num_users):
+                    #             self.clients[client].local_model.train()
+                    #             # self.clients[client].local_model.eval()
+                    #             times = self.args.forward_times
+                    #             results = []
+                    #             for time in range(times):
+                    #                 result = F.softmax(self.clients[client].local_model(images), dim=1)
+                    #                 result = result.detach().cpu().numpy()
+                    #                 results.append(result)
+                    #             item_mean = np.mean(results, axis=0)
+                    #             client_item_mean.append(item_mean)
+                    #
+                    #     outputs = client_item_mean
+                    #     outputs = torch.tensor(outputs)
+                    #     outputs_tmp = np.array(outputs)
+
+                    outputs_entropy = []
+                    # 2,4 使用预测熵
+                    if self.args.use_avg_loss == 2 or self.args.use_avg_loss == 4:
+                        if self.args.kalman == 0:
+                            for i in range(self.args.num_users):
+                                outputs_entropy.append(
+                                    - np.sum(outputs_tmp[i] * np.log(outputs_tmp[i]),
+                                             axis=-1))
+                            all_entropy = np.stack(outputs_entropy, axis=0)
+                            all_entropy = torch.tensor(all_entropy) / self.args.weight_temperature
+                            all_entropy = all_entropy / torch.sum(all_entropy, dim=0)
+                            # all_entropy = F.softmax(all_entropy,dim=0)
+                            all_entropy = torch.unsqueeze(all_entropy, -1)
+                            # if batch_idx == 1:
+                            #     print(all_entropy)
+                            avg_soft_label = np.sum(np.array(outputs_tmp) * all_entropy.numpy(), axis=0)
+                            avg_soft_label = torch.tensor(avg_soft_label)
+                        else:
+                            # kalman = 1
+                            for i in range(self.args.num_users):
+                                outputs_entropy.append(np.sum(-outputs_tmp[i] * np.log2(outputs_tmp[i]), axis=1))
+                            all_entropy = np.stack(outputs_entropy, axis=0)
+                            sigma_divided_by_1 = 1 / torch.tensor(np.square(all_entropy))
+                            sum_sigma = 1 / torch.sum(sigma_divided_by_1, dim=0)
+                            weight = sum_sigma * torch.tensor(sigma_divided_by_1)
+                            weight = torch.unsqueeze(weight, -1)
+                            avg_soft_label = torch.sum(torch.tensor(outputs_tmp) * weight, dim=0)
+                    # 5 使用置信度
+                    elif self.args.use_avg_loss == 5:
+                        outputs_tmp = np.array(outputs_tmp)
+                        weight = np.max(outputs_tmp, axis=2)
+                        weight = weight / np.sum(weight, axis=0)
+                        weight = torch.unsqueeze(torch.tensor(weight), -1)
+                        avg_soft_label = torch.sum(torch.tensor(outputs_tmp) * weight, dim=0)
+                    avg_soft_label = avg_soft_label.to(self.device)
+
+                avg_soft_label = avg_soft_label.to(self.device)
+                # 利用无标签数据集训练
+                for i in range(self.args.model_num):
+                    # predict = outputs[i]
+                    self.global_models[i].train()
+                    predict = self.global_models[i](images)
+                    loss = self.loss_kl(F.log_softmax(predict, dim=1), avg_soft_label)
+                    self.optimizers[i].zero_grad()
+                    loss.backward()
+                    self.optimizers[i].step()
 
     def train(self):
 
@@ -168,17 +251,26 @@ class Server:
                 print('client = ',client)
                 self.clients[client].train()
             # 模块2 聚合
-            if epoch < 1000:
-                self.aggregate()
+            # if epoch < 1000:
+            self.aggregate()
             # 模块3 预测
             local_test_losses = []
             local_test_accs = []
+            model_test_losses = []
+            model_test_accs = []
             # test on each clients
-            for model in range(len(self.global_models)):
-                acc, loss = self.clients[model].inference()
-                print('model = ',model,' acc = ',acc,' loss = ',loss)
+            # 客户端test
+            for client in range(self.args.num_users):
+                acc, loss = self.clients[client].inference()
+                print('cient = ',client,' acc = ',acc,' loss = ',loss)
                 local_test_accs.append(copy.deepcopy(acc))
                 local_test_losses.append(copy.deepcopy(loss))
+            # 模型test
+            for model in range(self.args.model_num):
+                acc, loss =  self.inference2(self.global_models[model])
+                print('model = ',model,' acc = ',acc,' loss = ',loss)
+                model_test_accs.append(copy.deepcopy(acc))
+                model_test_losses.append(copy.deepcopy(loss))
 
             # test on model
             # for model in range(len(self.global_models)):
