@@ -1,0 +1,1 @@
+{"test_losses": [0.046099330663681035], "test_accs": [0.012], "local_test_losses": [[0.045981961727142334, 0.04621669960021973]], "local_test_accs": [[0.015, 0.009]], "global_test_losses": [0.04595267915725708], "global_test_accs": [0.009]}

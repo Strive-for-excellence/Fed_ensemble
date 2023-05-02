@@ -36,7 +36,7 @@ def args_parser():
     parser.add_argument('--alpha', type=float, default=0.1, help='the degree of imbalance')
 
     # model arguments
-    parser.add_argument('--model', type=str, default='ResNet18', help='model name')
+    parser.add_argument('--model', type=str, default='LeNet', help='model name')
     parser.add_argument('--kernel_num', type=int, default=9, help='number of each kind of kernel')
     parser.add_argument('--kernel_sizes', type=str, default='3,4,5',
                         help='comma-separated kernel size to use for convolution')
@@ -60,7 +60,7 @@ def args_parser():
 
     parser.add_argument('--name',type=str, default='time',help='name of process')
     # mixture global and local representation arguments
-    parser.add_argument('--policy', type=int, default=1, choices=[0,1,2,3,4,5], help='global training policy')
+    parser.add_argument('--policy', type=int, default=1, choices=[0,1,2,3,4,5,6], help='global training policy')
     # parser.add_argument('--domains', type=str, default='mnistm,mnist,usps,syn',
     #                     help='different domain in federated learning')
     parser.add_argument('--early_stop',type=int,default=1,help='early_stop')
@@ -80,9 +80,24 @@ def args_parser():
     parser.add_argument('--forward_times',type=int,default=5,help='MC dropout times')
     parser.add_argument('--col_threshold',type=int,default=0,help='col policy threshold epoch')
     parser.add_argument('--drop_rate',type=float,default=0,help='dropout rate')
+
+    parser.add_argument('--model_num',type=int,default=20,help='model_num')
+    parser.add_argument('--model_num_per_client',type = int,default=2,help='model_num_per_client')
+    parser.add_argument('--global_test_data_num', type=int, default=-1, help='model_num_per_client')
+    parser.add_argument('--share_layer',type=int,default=1,help='share bottom ResNet8')
     args = parser.parse_args()
+    if args.dataset == 'mnist':
+        args.num_classes = 10
+    elif args.dataset == 'cifar10':
+        args.num_classes = 10
+    elif args.dataset == 'cifar100':
+        args.num_classes = 100
     if args.name == 'time':
         args.name = str(time.localtime().tm_year)+str(time.localtime().tm_mon)+str(time.localtime().tm_mday)+str(time.localtime().tm_hour)+str(time.localtime().tm_min)+str(time.localtime().tm_sec)
     if args.pub_data == "":
         args.pub_data = args.dataset
+    if args.dataset == 'mnist' or args.dataset == 'fashion_mnist':
+        args.in_planes = 1
+    else:
+        args.in_planes = 3
     return args

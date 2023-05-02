@@ -72,6 +72,16 @@ def build_dataset(args):
 
         testset = torchvision.datasets.MNIST(data_dir, train=False, download=True,
                                       transform=apply_transform)
+    elif args.dataset == 'fashion_mnist':
+        data_dir = '../data/fashion_mnist/'
+        apply_transform = transforms.Compose([
+            transforms.ToTensor(),
+            transforms.Normalize((0.1307,), (0.3081,))])
+        trainset = torchvision.datasets.FashionMNIST(data_dir, train=True, download=True,
+                                              transform=apply_transform)
+
+        testset = torchvision.datasets.FashionMNIST(data_dir, train=False, download=True,
+                                             transform=apply_transform)
     else:
         print('wrong dataset name')
     return trainset, testset
@@ -141,17 +151,34 @@ def get_pub_data(dataset_name,args):
             transforms.ToTensor(),
             transforms.Normalize((0.1307,), (0.3081,))])
         trainset = torchvision.datasets.MNIST(data_dir, train=True, download=True,
-                                       transform=apply_transform)
+                                                     transform=apply_transform)
 
         testset = torchvision.datasets.MNIST(data_dir, train=False, download=True,
-                                      transform=apply_transform)
+                                                    transform=apply_transform)
+    elif args.dataset == 'fashion_mnist':
+        data_dir = '../data/fashion_mnist/'
+        apply_transform = transforms.Compose([
+            transforms.ToTensor(),
+            transforms.Normalize((0.1307,), (0.3081,))])
+        trainset = torchvision.datasets.FashionMNIST(data_dir, train=True, download=True,
+                                              transform=apply_transform)
+
+        testset = torchvision.datasets.FashionMNIST(data_dir, train=False, download=True,
+                                             transform=apply_transform)
     else:
         print('wrong dataset name')
     idxs = random.sample([_ for _ in range(len(trainset.targets))],min(args.pub_data_num,len(trainset.targets)))
 
     trainset = DatasetSplit(trainset,idxs)
     trainset = torch.utils.data.DataLoader(trainset,batch_size=args.local_bs,shuffle=False)
-    testset = torch.utils.data.DataLoader(testset,batch_size=args.local_bs,shuffle=False)
+    if args.global_test_data_num != -1:
+        random.seed(args.seed)
+        idxs = random.sample([_ for _ in range(len(testset.targets))],min(len(testset.targets),args.global_test_data_num))
+        testset = DatasetSplit(testset,idxs)
+        print('idxs = ',idxs)
+        testset = torch.utils.data.DataLoader(testset,batch_size=args.local_bs,shuffle=False)
+    else:
+        testset = torch.utils.data.DataLoader(testset,batch_size=args.local_bs,shuffle=False)
     return trainset, testset
 
 class DataSet:
